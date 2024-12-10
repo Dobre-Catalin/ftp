@@ -18,6 +18,27 @@ ServerController::~ServerController() {
 }
 
 /*
+ * downloadFileValid function
+ * checks if the path is not empty
+ * checks if the path is safe from traversal attacks
+ * Returns true if the path is valid, false otherwise.
+ */
+bool ServerController::downloadFileValid(const std::string &remotePath) {
+    if (remotePath.empty()) {
+        std::cerr << "Invalid path: path is empty" << std::endl;
+        return false;
+    }
+    std::string unpermitted = "/\\:*?\"<>|";
+    for (char c : unpermitted) {
+        if (remotePath.find(c) != std::string::npos) {
+            std::cerr << "Invalid character in remote path: " << c << std::endl;
+            return false;
+        }
+    }
+    return true;
+}
+
+/*
  * login function
  * Logs in to the server with the given username and password.
  * Takes parameters:
@@ -60,6 +81,7 @@ void ServerController::listFiles() {
  */
 void ServerController::uploadFile(const std::string& localPath, const std::string& remotePath) {
     try {
+        //upload the file
         client.uploadFile(localPath, remotePath);
     } catch (const std::exception& ex) {
         std::cerr << "Failed to upload file: " << ex.what() << std::endl;
@@ -76,6 +98,12 @@ void ServerController::uploadFile(const std::string& localPath, const std::strin
  * The function catches any exceptions thrown by the FTPClient object and prints an error message.
  */
 void ServerController::downloadFile(const std::string& remotePath, const std::string& localPath) {
+
+    if (downloadFileValid(remotePath) == false) {
+        std::cerr<<"Invalid path"<<std::endl;
+        return;
+    }
+
     try {
         client.downloadFile(remotePath, localPath);
     } catch (const std::exception& ex) {
