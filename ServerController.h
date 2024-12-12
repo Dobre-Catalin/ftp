@@ -1,23 +1,25 @@
-#ifndef SERVERCONTROLLER_H
-#define SERVERCONTROLLER_H
+    #ifndef SERVERCONTROLLER_H
+    #define SERVERCONTROLLER_H
 
-#include "FTPClient.h"
-#include <string>
-#include <stdexcept>
+    #include "FTPClient.h"
+    #include <string>
+    #include <stdexcept>
 
-class ServerController {
-public:
-    ServerController(const std::string& serverAddress, int serverPort);
-    ~ServerController();
+    class ServerController {
+    public:
+        ServerController(const std::string& serverAddress, int serverPort);
+        ~ServerController();
 
-    void login(const std::string& username, const std::string& password);
-    void listFiles();
-    void uploadFile(const std::string& localPath, const std::string& remotePath);
-    void downloadFile(const std::string& remotePath, const std::string& localPath);
-    void logout();
+        static bool downloadFileValid(const std::string &remotePath);
 
-private:
-    FTPClient client;
-};
+        void login(const std::string& username, const std::string& password);
+        void listFiles();
+        void uploadFile(const std::string& localPath, const std::string& remotePath);
+        void downloadFile(const std::string& remotePath, const std::string& localPath);
+        void logout();
 
-#endif
+    private:
+        FTPClient client;
+    };
+
+    #endif

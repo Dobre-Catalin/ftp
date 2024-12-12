@@ -229,6 +229,77 @@ void FTPClient::logout() {
  * The function then reads the file in chunks and sends the data to the server using the data socket.
  * The function closes the file and the data socket after the upload is complete.
  */
+void FTPClient::uploadFile(const std::string& localPath, const std::string& remotePath) {
+
+
+    const std::string driveFolder = "drive";  // Define the 'drive' directory name
+
+    if (!std::filesystem::exists(driveFolder)) {
+        throw std::runtime_error("Directory 'drive' does not exist.");
+    }
+
+    std::string fullLocalPath = driveFolder + "/" + localPath;
+
+    if (!std::filesystem::exists(fullLocalPath) || std::filesystem::is_directory(fullLocalPath)) {
+        throw std::runtime_error("File not found or invalid path: " + fullLocalPath);
+    }
+
+    std::ifstream file(fullLocalPath, std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open file: " + fullLocalPath);
+    }
+
+    int dataSocket = enterPassiveMode();
+    sendCommand("STOR " + remotePath);
+    std::string response = readResponse();
+
+    if (!checkResponseCode(response, "150") && !checkResponseCode(response, "125")) {
+        throw std::runtime_error("Failed to initiate file upload: " + response);
+    }
+
+    std::cout << "Starting file upload: " << fullLocalPath << " to " << remotePath << std::endl;
+
+    char buffer[BUFFER_SIZE];
+    while (file.read(buffer, BUFFER_SIZE) || file.gcount() > 0) {
+        int bytesToSend = static_cast<int>(file.gcount());
+        int bytesSent = 0;
+
+        // Continue sending until all bytes are transmitted
+        while (bytesSent < bytesToSend) {
+            int sent = send(dataSocket, buffer + bytesSent, bytesToSend - bytesSent, 0);
+            if (sent < 0) {
+                throw std::runtime_error("Failed to send file data: " + std::string(strerror(errno)));
+            }
+            bytesSent += sent;
+        }
+    }
+
+    file.close();
+    close(dataSocket);
+
+    response = readResponse();
+    if (!checkResponseCode(response, "226") && !checkResponseCode(response, "250")) {
+        throw std::runtime_error("File upload failed: " + response);
+    }
+
+    std::cout << "File uploaded successfully: " << remotePath << std::endl;
+}
+
+
+/*
+ * downloadFile function
+ * Downloads a file from the server.
+ * Takes parameters:
+ * - remotePath: the remote path of the file to download
+ * - localPath: the local path where the file will be saved
+ * Throws a runtime_error if the download fails.
+ * Returns void.
+ * The function enters passive mode and obtains the data socket for data transfer.
+ * It sends the RETR command to the server with the remote path.
+ * The function reads the server's response and checks if the response code is 226 (Closing data connection).
+ * The function then reads the data from the data socket and writes it to a file in binary mode.
+ * The function closes the file and the data socket after the download is complete.
+ */
 void FTPClient::downloadFile(const std::string& remotePath, const std::string& localPath) {
     // Check if the 'drive' directory exists
     const std::string driveFolder = "drive";

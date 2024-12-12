@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "ServerController.h"
+
 std::vector<std::string> getTokens(const std::string& str) {
     std::vector<std::string> tokens;
     size_t start = 0;
@@ -37,15 +39,15 @@ int main() {
 
     try {
         std::string username, password;
-        FTPClient client(serverAddress, serverPort);
+        ServerController client(serverAddress, serverPort);
 
         std::cout << "Enter username: ";
         std::cin >> username;
-        client.user(username);
 
         std::cout << "Enter password: ";
         std::cin >> password;
-        client.pass(password);
+
+        client.login(username, password);
 
         std::cin.ignore(); // Clear newline left in the input buffer
 
